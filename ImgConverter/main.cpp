@@ -68,6 +68,7 @@ int main(int argc, const char** argv) {
     const Image image = in_handler->load(in_path);
     if (!image) {
         cerr << "Loading failed"sv << endl;
+        return 4;
     }
 
     if (!out_handler->save(out_path, image)) {

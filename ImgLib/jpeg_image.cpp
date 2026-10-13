@@ -1,6 +1,8 @@
-#include <jpeglib.h>
+// clang-format off
 #include <setjmp.h>
 #include <stdio.h>
+#include <jpeglib.h>
+// clang-format on
 
 #include <array>
 #include <fstream>

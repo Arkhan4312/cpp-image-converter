@@ -11,19 +11,19 @@ using namespace std;
 namespace img_lib {
 namespace {
 constexpr uint16_t BMP_SIGNATURE = 0x4D42;
-constexpr uint32_t BMP_FILE_HEADER_SIZE = 14;
-constexpr uint32_t BMP_INFO_HEADER_SIZE = 40;
-constexpr uint32_t BMP_DATA_OFFSET =
-    BMP_FILE_HEADER_SIZE + BMP_INFO_HEADER_SIZE;
+constexpr int BMP_BYTES_PER_PIXEL = 3;
+constexpr int BMP_ROW_ALIGNMENT = 4;
 constexpr uint16_t BMP_PLANES = 1;
-constexpr uint16_t BMP_BITS_PER_PIXEL = 24;
+constexpr uint16_t BMP_BITS_PER_PIXEL = BMP_BYTES_PER_PIXEL * 8;
 constexpr uint32_t BMP_COMPRESSION_NONE = 0;
 constexpr int32_t BMP_PELS_PER_METER = 11811;
 constexpr int32_t BMP_CLR_USED = 0;
 constexpr int32_t BMP_CLR_IMPORTANT = 0x1000000;
 
 static int GetBMPStride(int w) {
-    return 4 * ((w * 3 + 3) / 4);
+    return BMP_ROW_ALIGNMENT *
+           ((w * BMP_BYTES_PER_PIXEL + BMP_BYTES_PER_PIXEL) /
+            BMP_ROW_ALIGNMENT);
 }
 }  // namespace
 
@@ -50,7 +50,15 @@ PACKED_STRUCT_BEGIN BitmapInfoHeader {
 }
 PACKED_STRUCT_END
 
-// напишите эту функцию
+namespace {
+constexpr uint32_t BMP_FILE_HEADER_SIZE =
+    static_cast<uint32_t>(sizeof(BitmapFileHeader));
+constexpr uint32_t BMP_INFO_HEADER_SIZE =
+    static_cast<uint32_t>(sizeof(BitmapInfoHeader));
+constexpr uint32_t BMP_DATA_OFFSET =
+    BMP_FILE_HEADER_SIZE + BMP_INFO_HEADER_SIZE;
+}  // namespace
+
 bool SaveBMP(const Path& file, const Image& image) {
     const int w = image.GetWidth();
     const int h = image.GetHeight();
@@ -124,6 +132,10 @@ Image LoadBMP(const Path& file) {
 
     in.read(reinterpret_cast<char*>(&file_header), sizeof(file_header));
     in.read(reinterpret_cast<char*>(&info_header), sizeof(info_header));
+
+    if (!in) {
+        return {};
+    }
 
     if (file_header.bf_type != BMP_SIGNATURE ||
         file_header.bf_off_bits != BMP_DATA_OFFSET ||
